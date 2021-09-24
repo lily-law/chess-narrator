@@ -12,7 +12,22 @@ export default {
     name: 'game-menu',
     data() {
         return {
-          games: [],
+          games: [
+            // temp placeholder data
+            {
+             'id': 0,
+             'title': 'Someone vs Someone Else',
+             'description': 'An example game to use as dummy data',
+             'date': '2021-07-26T11:37:24.688Z',
+             'source': {
+                 'text': 'Made up by me',
+                 'link': 'http://example.com'
+              },
+             'playingWhite': 0,
+             'playingBlack': 1,
+             'user_id': 0
+         }
+          ],
         }
     },
     methods: {
@@ -21,7 +36,7 @@ export default {
         axios.get(path)
           .then((res) => {
             console.log(res.data)
-            this.games = res.data.games
+            // this.games = res.data.games
           })
           .catch((error) => {
             console.error(error)
