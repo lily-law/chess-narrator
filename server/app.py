@@ -10,7 +10,7 @@ from db import SQL
 # Load in env varibles from .env file
 load_dotenv()
 
-db = 
+db = SQL('chessGame.db')
 
 # Temporary data store until database is added
 # DB = {
@@ -152,7 +152,7 @@ def register():
     return redirect('/')
 
 @app.route('/register/confirmation', methods=['POST'])
-def confirm_email():
+def send_email_confirmation():
     '''Resend email confirmation'''
     # TODO
     print('Resend email confirmation')
@@ -188,13 +188,10 @@ def all_games():
     response_object = {'statusCode': 200}
     if request.method == 'POST':
         post_data = request.get_json()
-        DB['games'].append({
-            'title': post_data.get('title'),
-            # TODO: add remaining fields
-        })
+        db.execute('INSERT INTO games (title) VALUES(?)', post_data.get('title'))
         response_object['message'] = 'Game added!'
     else: 
-        response_object['games'] = DB['games']
+        response_object['games'] = db.execute('SELECT * FROM games').fetchall()
     return jsonify(response_object)
 
 

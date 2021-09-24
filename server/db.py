@@ -11,7 +11,7 @@ def create_connection(db_file):
     """
     conn = None
     try:
-        conn = sqlite3.connect(db_file)
+        conn = sqlite3.connect(db_file, check_same_thread=False)
         return conn
     except Error as e:
         print(e)
@@ -53,6 +53,22 @@ def SQL(db_file_path):
                                         FOREIGN KEY (person_id) REFERENCES people (id)
                                     ); """
 
+    sql_create_games_table = """ CREATE TABLE IF NOT EXISTS games (
+                                        id integer PRIMARY KEY,
+                                        title text NOT NULL,
+                                        description text,
+                                        date text,
+                                        source_text text,
+                                        source_link text,
+                                        playing_white integer NOT NULL,
+                                        playing_black integer NOT NULL,
+                                        user_id integer NOT NULL,
+                                        FOREIGN KEY (user_id) REFERENCES users (id)
+                                        FOREIGN KEY (playing_white) REFERENCES people (id)
+                                        FOREIGN KEY (playing_black) REFERENCES people (id)
+                                    ); """
+
+
     # create a database connection
     conn = create_connection(database)
 
@@ -63,6 +79,9 @@ def SQL(db_file_path):
 
         # create people table
         create_table(conn, sql_create_people_table)
+
+        # create games table
+        create_table(conn, sql_create_games_table)
 
         return conn
     else:
