@@ -1,5 +1,7 @@
 node_modules
 
+server/*.db
+
 #####
 # Borrowed from https://github.com/github/gitignore/blob/master/Python.gitignore
 #####
