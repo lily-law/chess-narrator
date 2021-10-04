@@ -1,9 +1,22 @@
 <template>
-    <main>
-        <!-- TODO: USER/LOGIN -->
-        <game-menu />
-        <game-maker />
-    </main>
+    <div>
+        <header>
+            <h1>Title</h1>
+            <!-- TODO: USER/LOGIN -->
+        </header>
+        <main>
+            <div class="tool-bar">
+                <div>
+                <!-- TODO: search -->
+                </div>
+                <div>
+                <!-- TODO: sortbydate -->
+                </div>
+                <game-maker />
+            </div>
+            <game-menu />
+        </main>
+    </div>
 </template>
 
 <script>
@@ -17,3 +30,10 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.tool-bar {
+    display: flex;
+    justify-content: space-between;
+}
+</style>

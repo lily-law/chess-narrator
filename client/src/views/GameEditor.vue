@@ -3,27 +3,26 @@
         <header>
             <home-button />
             <h1>{{ title }}</h1>
-            <h2 :class="`to-play--${toPlay}`"><span v-if="turn > 0">{{ toPlay }} : Turn {{ turn }}</span></h2>
+            <h2>{{ turn % 2 == 0 ? 'White' : 'Black' }} : Turn {{ turn }}</h2>
             <hamburger-menu />
         </header>
         <aside>
             <ol>
-                <li v-for="item in Object.values(notation)" :key="item.order">
+                <li v-for="item in annotation" :key="item.order">
                     <div class="list__move">{{ item.move }}</div>
                     <div v-if="item.comment" class="list__comment">- <span>{{ item.comment }}</span></div>
                 </li>
             </ol>
+            <button>+</button>
         </aside>
         <main>
-            <div v-on:click="() => { boardActive = !boardActive }">
-                <chess-board :class="{board: true, 'board--active': boardActive}" ref="board" />
-            </div> 
+            <div class="board"></div>
             <div class="move">
-                <h3>{{ move }}</h3>
+                <h3>{{ annotation[turn].move }}</h3>
                 <p class="full-move">{{ fullMove }}</p>
             </div>
-            <button v-on:click="next" class="next">{{this.turn === 0 ? 'Start' : 'Next'}}</button>
-            <div class="commentry">{{ comment }}</div>
+            <button class="next">Next</button>
+            <div class="commentry">{{ annotation[turn].comment }}</div>
         </main>
     </div>
 </template>
@@ -31,81 +30,40 @@
 <script>
 import HomeButton from '@/components/HomeButton.vue'
 import HamburgerMenu from '@/components/HamburgerMenu.vue'
-import ChessBoard from '@/components/ChessBoard.vue'
 
 export default {
     components: {
         HomeButton,
-        HamburgerMenu,
-        ChessBoard
+        HamburgerMenu
     },
     data: function () {
         return {
             id: this.$route.params.id,
             turn: 0,
-            boardActive: false,
-            
-        
+
             // TEMP dummy data
             title: 'Someone vs Someone Else',
-            notation: {
-                1: {
-                    order: 1, 
-                    move: 'QxNe4',
-                    comment: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis semper arcu lacus, sit amet porttitor sem vehicula at. In ac turpis lacinia lectus rutrum sagittis. Nulla metus nulla, pellentesque ac magna et, elementum feugiat nisl. Proin bibendum ligula at arcu feugiat hendrerit. In purus turpis, tincidunt id neque accumsan, suscipit ultrices nisi. Maecenas posuere nunc ut efficitur pharetra. Quisque tristique blandit risus ut convallis.
-
-Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augue tristique, commodo pellentesque dui congue. Suspendisse potenti. Ut pulvinar cursus dolor, et efficitur leo congue nec. Fusce turpis urna, convallis sed feugiat id, viverra vel ex. Vestibulum ultricies ipsum in mauris aliquam luctus. Curabitur ut porttitor enim. Mauris et ultricies leo. Donec feugiat augue mauris, sed luctus dolor vestibulum at. Etiam iaculis ligula nec consectetur dictum. Nunc volutpat commodo nulla ac eleifend. Mauris varius dapibus massa non finibus. Vivamus malesuada malesuada ante, in sagittis ex venenatis sed. Suspendisse mattis risus dui, at dapibus enim pretium dapibus. Vivamus consectetur risus augue, eu venenatis lectus malesuada id. Duis sem ante, dapibus non magna eget, mollis porta magna.`
-                },
-                2: {
-                    order: 2, 
+            annotation: [
+                {
+                    order: 0, 
                     move: 'Ke4',
                     comment: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis semper arcu lacus, sit amet porttitor sem vehicula at. In ac turpis lacinia lectus rutrum sagittis. Nulla metus nulla, pellentesque ac magna et, elementum feugiat nisl. Proin bibendum ligula at arcu feugiat hendrerit. In purus turpis, tincidunt id neque accumsan, suscipit ultrices nisi. Maecenas posuere nunc ut efficitur pharetra. Quisque tristique blandit risus ut convallis.
 
 Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augue tristique, commodo pellentesque dui congue. Suspendisse potenti. Ut pulvinar cursus dolor, et efficitur leo congue nec. Fusce turpis urna, convallis sed feugiat id, viverra vel ex. Vestibulum ultricies ipsum in mauris aliquam luctus. Curabitur ut porttitor enim. Mauris et ultricies leo. Donec feugiat augue mauris, sed luctus dolor vestibulum at. Etiam iaculis ligula nec consectetur dictum. Nunc volutpat commodo nulla ac eleifend. Mauris varius dapibus massa non finibus. Vivamus malesuada malesuada ante, in sagittis ex venenatis sed. Suspendisse mattis risus dui, at dapibus enim pretium dapibus. Vivamus consectetur risus augue, eu venenatis lectus malesuada id. Duis sem ante, dapibus non magna eget, mollis porta magna.`
                 }
-            }
-        }
-    },
-    methods: {
-        next: function() {
-            this.turn++
-            this.$refs.board.move(this.notation[this.turn], this.toPlay)
+            ]
         }
     },
     computed: {
-        move: function () {
-            if (!this.notation[this.turn]?.move) {
-                return ''
-            }
-            return this.notation[this.turn].move
-        },
         fullMove: function () {
-            if (!this.move) {
-                return ''
-            }
             const movesLookup = {
-                'B': 'Bishop',
-                'K': 'King',
-                'N': 'Knight',
-                'P': 'Pawn',
-                'Q': 'Queen',
-                'R': 'Rook'
+                'K': 'Knight',
+
             }
-            const charToPeice = (char) => char && char === char.toLowerCase() ? movesLookup['P'] : movesLookup[char]
-            
-            const movingPeice = charToPeice(this.move[0])
-            let takenPeice = this.move.includes('x') && charToPeice(this.move[this.move.indexOf('x') + 1])
-            const move = this.move.substr(this.move.length-2)
-            return `${movingPeice} ${takenPeice ? 'takes '+takenPeice+' on' : 'to'} ${move}`
-        },
-        comment: function () {
-            if (!this.notation[this.turn]?.comment) {
-                return ''
-            }
-            return this.notation[this.turn].commnet
-        },
-        toPlay: function () {
-            return this.turn % 2 === 0 ? 'dark' : 'light'
+            const move = this.annotation[this.turn].move;
+            const peice = movesLookup[move[0]]
+
+            return `${peice} to ${move.substr(1)}`
         }
     }
 }
@@ -148,9 +106,6 @@ Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augu
         display: grid;
         align-items: center;
     }
-    .to-play--light {
-        background-color: lightgray;
-    }
     .menu-toggle {
         padding: 4px 12px;
         align-self: stretch;
@@ -189,19 +144,11 @@ Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augu
         left: 0;
         width: 40vw;
         height: 40vw;
-        opacity: 0.5;
+        opacity: 0.8;
         z-index: 10;
-        transform: scale(0.9);
-        background-color: white;
-    }
-    .board--active {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 75vw;
-        height: 75vw;
-        opacity: 0.9;
-        z-index: 100;
+        background-image: linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%);
+        background-size: 10vw 10vw;
+        background-position: 0 0, 0 5vw, 5vw -5vw, -5vw 0;
         transform: scale(0.9);
     }
     .move {
@@ -229,8 +176,8 @@ Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augu
         right: 3vw;
         top: 15vw;
         border-radius: 0.6em;
-        font-size: 2.6vw;
-        padding: 0.8em;
+        font-size: 4vw;
+        padding: 0.4em;
         font-weight: 600;
     }
     .commentry {

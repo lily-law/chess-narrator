@@ -1,7 +1,8 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Home from '../views/Home.vue';
-import Game from '../views/Game.vue';
+import Home from '@/views/Home.vue';
+import Game from '@/views/Game.vue';
+import GameEditor from '@/views/GameEditor.vue';
 
 Vue.use(VueRouter);
 
@@ -13,6 +14,10 @@ const routes = [
   {
     path: '/game/:id',
     component: Game
+  },
+  {
+    path: '/game/:id/edit',
+    component: GameEditor
   },
   // {
   //   path: '/about',
