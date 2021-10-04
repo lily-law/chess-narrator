@@ -24,6 +24,7 @@ TODO
 1. If first time run:
     - `python3 -m pip install -r requirements.txt` 
     - or if in WIndows OS `py -m pip install -r requirements.txt`
+1. Set `export FLASK_ENV=development` to enable debug mode
 1. `flask run`
 ### Client
 1. In another terminal from project root `cd client`
