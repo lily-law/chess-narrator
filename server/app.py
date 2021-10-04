@@ -5,57 +5,15 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import load_dotenv
-from db import SQL
+from db import SQL, create_table
+from datetime import datetime
+import json
 
 # Load in env varibles from .env file
 load_dotenv()
 
 db = SQL('chessGame.db')
 
-# Temporary data store until database is added
-# DB = {
-#     'users': [
-#         {
-#             'id': '0',
-#             'person_id': '2',
-#             'email_hash': 'abc',
-#             'password_hash': 'abc',
-#             'username': 'abc',
-#             'email_confirmed': '2021-07-26T11:37:24.688Z'
-#         }
-#     ],
-#     'people': [
-#         {
-#             'id': '0',
-#             'name': 'default user 1',
-#         },
-#         {
-#             'id': '1',
-#             'name': 'default user 2',
-#         },
-#         {
-#             'id': '2',
-#             'name': 'Some User',
-#             'avatar': '',
-#             'user_id': '0'
-#         }
-#     ],
-#     'games': [
-#         {
-#             'id': '0',
-#             'title': 'Someone vs Someone Else',
-#             'description': 'An example game to use as dummy data',
-#             'date': '2021-07-26T11:37:24.688Z',
-#             'source': {
-#                 'text': 'Made up by me',
-#                 'link': 'http://example.com'
-#             },
-#             'playingWhite': '0',
-#             'playingBlack': '1',
-#             'user_id': '0'
-#         }
-#     ]
-# }
 
 # instantiate the app
 app = Flask(__name__)
@@ -93,14 +51,13 @@ def login():
         return apology('must provide password', 403)
 
     # Query database for username
-    # TODO: swap once DB is setup
-    rows = filter(lambda user: (user['username'] == request.form.get('username')), db['users'])
-    ## rows = db.execute('SELECT * FROM users WHERE username = ?', request.form.get('username'))
+    rows = db.execute('SELECT * FROM users WHERE username = ?', request.form.get('username'))
 
     # Ensure username exists and password is correct
     if len(rows) != 1 or not check_password_hash(rows[0]['password_hash'], request.form.get('password')):
         return apology('invalid username and/or password', 403)
 
+    # Ensure email has been confirmed
     if not rows[0]['email_confirmed']:
         return apology('follow link in email confirmation', 400)
 
@@ -177,38 +134,82 @@ def email_reset_token():
     print('send email reset')
 
 
-# sanity check route
-@app.route('/ping', methods=['GET'])
-def ping_pong():
-    return jsonify('pong!')
-
-
-@app.route('/games', methods=['GET', 'POST'])
+@app.route('/games/list', methods=['GET', 'POST'])
 def all_games():
     response_object = {'statusCode': 200}
     if request.method == 'POST':
         post_data = request.get_json()
-        db.execute('INSERT INTO games (title) VALUES(?)', post_data.get('title'))
-        response_object['message'] = 'Game added!'
-    else: 
-        response_object['games'] = db.execute('SELECT * FROM games').fetchall()
+        title = post_data['title']
+        description = post_data['description']
+        date = datetime.now().isoformat()
+        source_text = post_data['sourceText']
+        source_link = post_data['sourceLink']
+        playing_white = post_data['playingWhite']
+        playing_black = post_data['playingBlack']
+        user_id = session['user_id']
+        # Insert game listing into db
+        game_listing = db.execute('''
+            INSERT INTO games (
+                title, 
+                description, 
+                date, 
+                source_text, 
+                source_link, 
+                playing_white, 
+                playing_black, 
+                user_id, 
+                revision_number
+            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+        ''', title, description, date, source_text, source_link, playing_white, playing_black, user_id, 0)
+        # TODO: create game data db table
+        create_table(db, "CREATE TABLE IF NOT EXISTS "+game_listing['id']+""" (
+            id integer PRIMARY KEY,
+            timestamp text DEFAULT CURRENT_TIMESTAMP,
+            data text NOT NULL
+        """)
+        response_object = { 'statusCode': 200, 'game': { 'listing': game_listing } }
+    else:
+        response_object = { 'statusCode': 200, 'gamesList': db.execute('SELECT * FROM games').fetchall() }
     return jsonify(response_object)
 
 
-@app.route('/game/<game_id>', methods=['GET'])
-def get_game_by_id():
-    response_object = {'statusCode': 200}
-    # TODO: Update game
+@app.route('/games/<game_id>', methods=['POST', 'GET', 'PUT', 'DELETE'])
+def get_game_by_id(game_id):
+    game_listing = db.execute('SELECT * FROM games WHERE id = ?', game_id)[0]
+    if not game_listing: 
+        return apology('Game not found', 404)
+    elif request.method == 'POST':
+        # Add game data
+        post_data = request.get_json()
+        game_data = db.execute('INSERT INTO '+game_listing['id']+' (data) VALUES(?)', json.dumps(post_data['gameData']))
+        listing = db.execute('UPDATE games SET revision_number = ? WHERE id = ?', game_data['id'], game_listing['id'])
+        response_object = { 'statusCode': 200, 'game': { 'listing': listing, 'data': game_data } }
+    elif request.method == 'GET':
+        # Send game data
+        game_data = db.execute('SELECT * FROM '+game_listing['id']+' WHERE id = ?', game_listing['revision_number'])
+        response_object = { 'statusCode': 200, 'gameData': game_data }
+    elif request.method == 'PUT': 
+        # Merge any new values into game_listing
+        post_data = request.get_json()
+        updated_data = { **game_listing, **post_data }
 
+        # Update game info
+        listing = db.execute('''
+            UPDATE games SET (
+                title, 
+                description, 
+                source_text, 
+                source_link, 
+                playing_white, 
+                playing_black,
+                revision_number
+            ) VALUES(?, ?, ?, ?, ?, ?) WHERE id = ?
+        ''', updated_data['title'], updated_data['description'], updated_data['source_text'], updated_data['source_link'], updated_data['playing_white'], updated_data['playing_black'], updated_data['revision_number'], game_listing['id'])
+    elif request.method == 'DELETE':
+        response_object = {'statusCode': 501}
+        # TODO: Remove game listing (and queue deletion?)
+    return jsonify(response_object)
 
-@app.route('/game/<uuid:game_id>', methods=['PUT'])
-def update_game_by_id():
-    response_object = {'statusCode': 200}
-    # TODO: Update game
-
-
-# if __name__ == '__main__':
-#     app.run()
 
 #####
 # Error handling
