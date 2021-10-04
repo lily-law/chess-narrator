@@ -63,6 +63,7 @@ def SQL(db_file_path):
                                         playing_white integer NOT NULL,
                                         playing_black integer NOT NULL,
                                         user_id integer NOT NULL,
+                                        revision_number interger NOT NULL,
                                         FOREIGN KEY (user_id) REFERENCES users (id)
                                         FOREIGN KEY (playing_white) REFERENCES people (id)
                                         FOREIGN KEY (playing_black) REFERENCES people (id)
