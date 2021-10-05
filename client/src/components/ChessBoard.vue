@@ -1,6 +1,6 @@
 <template>
     <ol class="chess-board">
-        <ol v-for="[rowNumber, row] in Object.entries(data).reverse()" :key="rowNumber+JSON.stringify(row)" class="row">
+        <ol v-for="[rowNumber, row] in Object.entries(rows).reverse()" :key="rowNumber+JSON.stringify(row)" class="row">
             <li v-for="[column, cell] in Object.entries(row)" :key="rowNumber+column+cell.unit"><img v-if="cell.unit.value" :src="`/assets/pieces/standard/${cell.unit.side}/${cell.unit.value}.png`" alt="" /></li>
         </ol>
     </ol>
@@ -13,89 +13,89 @@ export default {
     name: 'chess-board',
     data() {
         return {
-            
-          data: {
+          rows: {
                 1: {
-                    a: { unit: { value: 'R', side: 'light' } },
-                    b: { unit: { value: 'N', side: 'light' } },
-                    c: { unit: { value: 'B', side: 'light' } },
-                    d: { unit: { value: 'Q', side: 'light' } },
-                    e: { unit: { value: 'K', side: 'light' } },
-                    f: { unit: { value: 'B', side: 'light' } },
-                    g: { unit: { value: 'N', side: 'light' } },
-                    h: { unit: { value: 'R', side: 'light' } }
+                    a: { unit: { value: 'R', side: 'light', moves: 0 } },
+                    b: { unit: { value: 'N', side: 'light', moves: 0 } },
+                    c: { unit: { value: 'B', side: 'light', moves: 0 } },
+                    d: { unit: { value: 'Q', side: 'light', moves: 0 } },
+                    e: { unit: { value: 'K', side: 'light', moves: 0 } },
+                    f: { unit: { value: 'B', side: 'light', moves: 0 } },
+                    g: { unit: { value: 'N', side: 'light', moves: 0 } },
+                    h: { unit: { value: 'R', side: 'light', moves: 0 } }
                 },
                 2: {
-                    a: { unit: { value: 'P', side:'light' } },
-                    b: { unit: { value: 'P', side:'light' } },
-                    c: { unit: { value: 'P', side:'light' } },
-                    d: { unit: { value: 'P', side:'light' } },
-                    e: { unit: { value: 'P', side:'light' } },
-                    f: { unit: { value: 'P', side:'light' } },
-                    g: { unit: { value: 'P', side:'light' } },
-                    h: { unit: { value: 'P', side:'light' } }
+                    a: { unit: { value: 'P', side:'light', moves: 0 } },
+                    b: { unit: { value: 'P', side:'light', moves: 0 } },
+                    c: { unit: { value: 'P', side:'light', moves: 0 } },
+                    d: { unit: { value: 'P', side:'light', moves: 0 } },
+                    e: { unit: { value: 'P', side:'light', moves: 0 } },
+                    f: { unit: { value: 'P', side:'light', moves: 0 } },
+                    g: { unit: { value: 'P', side:'light', moves: 0 } },
+                    h: { unit: { value: 'P', side:'light', moves: 0 } }
                 },
                 3: {
-                    a: { unit: '' },
-                    b: { unit: '' },
-                    c: { unit: '' },
-                    d: { unit: '' },
-                    e: { unit: '' },
-                    f: { unit: '' },
-                    g: { unit: '' },
-                    h: { unit: '' }
+                    a: { },
+                    b: { },
+                    c: { },
+                    d: { },
+                    e: { },
+                    f: { },
+                    g: { },
+                    h: { }
                 },
                 4: {
-                    a: { unit: '' },
-                    b: { unit: '' },
-                    c: { unit: '' },
-                    d: { unit: '' },
-                    e: { unit: '' },
-                    f: { unit: '' },
-                    g: { unit: '' },
-                    h: { unit: '' }
+                    a: { },
+                    b: { },
+                    c: { },
+                    d: { },
+                    e: { },
+                    f: { },
+                    g: { },
+                    h: { }
                 },
                 5: {
-                    a: { unit: '' },
-                    b: { unit: '' },
-                    c: { unit: '' },
-                    d: { unit: '' },
-                    e: { unit: '' },
-                    f: { unit: '' },
-                    g: { unit: '' },
-                    h: { unit: '' }
+                    a: { },
+                    b: { },
+                    c: { },
+                    d: { },
+                    e: { },
+                    f: { },
+                    g: { },
+                    h: { }
                 },
                 6: {
-                    a: { unit: '' },
-                    b: { unit: '' },
-                    c: { unit: '' },
-                    d: { unit: '' },
-                    e: { unit: '' },
-                    f: { unit: '' },
-                    g: { unit: '' },
-                    h: { unit: '' }
+                    a: { },
+                    b: { },
+                    c: { },
+                    d: { },
+                    e: { },
+                    f: { },
+                    g: { },
+                    h: { }
                 },
                 7: {
-                    a: { unit: { value: 'P', side: 'dark' } },
-                    b: { unit: { value: 'P', side: 'dark' } },
-                    c: { unit: { value: 'P', side: 'dark' } },
-                    d: { unit: { value: 'P', side: 'dark' } },
-                    e: { unit: { value: 'P', side: 'dark' } },
-                    f: { unit: { value: 'P', side: 'dark' } },
-                    g: { unit: { value: 'P', side: 'dark' } },
-                    h: { unit: { value: 'P', side: 'dark' } }
+                    a: { unit: { value: 'P', side: 'dark', moves: 0 } },
+                    b: { unit: { value: 'P', side: 'dark', moves: 0 } },
+                    c: { unit: { value: 'P', side: 'dark', moves: 0 } },
+                    d: { unit: { value: 'P', side: 'dark', moves: 0 } },
+                    e: { unit: { value: 'P', side: 'dark', moves: 0 } },
+                    f: { unit: { value: 'P', side: 'dark', moves: 0 } },
+                    g: { unit: { value: 'P', side: 'dark', moves: 0 } },
+                    h: { unit: { value: 'P', side: 'dark', moves: 0 } }
                 },
                 8: {
-                    a: { unit: { value: 'R', side: 'dark' } },
-                    b: { unit: { value: 'N', side: 'dark' } },
-                    c: { unit: { value: 'B', side: 'dark' } },
-                    d: { unit: { value: 'Q', side: 'dark' } },
-                    e: { unit: { value: 'K', side: 'dark' } },
-                    f: { unit: { value: 'B', side: 'dark' } },
-                    g: { unit: { value: 'N', side: 'dark' } },
-                    h: { unit: { value: 'R', side: 'dark' } }
+                    a: { unit: { value: 'R', side: 'dark', moves: 0 } },
+                    b: { unit: { value: 'N', side: 'dark', moves: 0 } },
+                    c: { unit: { value: 'B', side: 'dark', moves: 0 } },
+                    d: { unit: { value: 'Q', side: 'dark', moves: 0 } },
+                    e: { unit: { value: 'K', side: 'dark', moves: 0 } },
+                    f: { unit: { value: 'B', side: 'dark', moves: 0 } },
+                    g: { unit: { value: 'N', side: 'dark', moves: 0 } },
+                    h: { unit: { value: 'R', side: 'dark', moves: 0 } }
                 }
-            }
+            },
+            bench: {}
         }
     },
     methods: {
@@ -104,6 +104,29 @@ export default {
                 console.warn('Empty move!') // TODO work out if this edge case needs handling
                 return false
             }
+            else if (value.length < 2) {
+                console.warn('Invalid move notation with length < 2!') 
+                return false
+            }
+
+            const annotationLookup = {
+                '+': 'check',
+                '#': 'checkmate',
+                '!': 'good move',
+                '?': 'poor move'
+            }
+            // TODO
+            // extract annotations
+            
+            // check if castling
+            if (this.value.includes('0-0-0')) {
+                // TODO
+                // castle queenside
+            }
+            else if (this.value.includes('0-0')) {
+                // TODO
+                // castle kingside
+            }
 
             const movingPeice = value[0] === value[0].toLowerCase() ? 'P' : this.value[0]
             let takenPeice = this.value.includes('x') && this.value[this.value.indexOf('x') + 1]
@@ -111,50 +134,95 @@ export default {
                 takenPeice = 'P'
             }
             const move = this.move.substr(this.move.length-2)
+            const specifiedOrig = this.move[this.move.length-3].match(/[a-g1-8]/)?.[0] || this.move[this.move.length-4].match(/[a-g1-8]/)?.[0]
 
-            const findPeice = (piece, side, baseCoord, validDiffs) => {
-                const getCells = () => {
-                    const cells = []
-                    const [baseRow, baseCol] = baseCoord.split('').reverse()
-                    for (let diff of validDiffs) {
-                        const potentialCells = Object.values(this.data).reduce((r, c) => r = [r, ...Object.values(c)])
-                        if (diff.row) {
-                            for (let i = diff.onwardOnly ? baseRow : baseRow - diff.row; i < )
-                        }
-                    }
-                }
-                // for each cell
-                //      
-            }
+        
+            // convert move char to int
+            const [baseRow, baseCol] = [this.move[0], this.move.charCodeAt(0)-96]
+            const colToChar = (col) => String.fromCharCode(col + 96)
+
+            let possibleCoords = []
 
             switch(movingPeice) {
                 case 'B':
                     // search diagonals from move coords
-                    break;
+                    for (let i = 1; i <= 8; i++) {
+                        possibleCoords.push([[baseRow+i, baseCol+i], [baseRow-i, baseCol-i]])
+                    }
+                    break
                 case 'K':
-                    
-                    break;
+                    possibleCoords = [
+                        [baseRow+1, baseCol-1], [baseRow+1, baseCol], [baseRow+1, baseCol+1],
+                        [baseRow, baseCol-1],                 [baseRow, baseCol+1],
+                        [baseRow-1, baseCol-1], [baseRow-1, baseCol], [baseRow-1, baseCol+1]
+                    ]
+                    break
                 case 'N':
-                    // search 1 row + 2 cols and 2 rows + 1 col from move coords
-                    findPeice('N', move, [ {rows: 1, cols: 2}, {rows: 2, cols: 1} ])
-                    break;
+                    // search 1 baseRow + 2 cols and 2 rows + 1 baseCol from move coords
+                    possibleCoords = [
+                       [baseRow+2, baseCol-1], [baseRow+2, baseCol+1], 
+                       [baseRow+1, baseCol-2], [baseRow+1, baseCol+2],  
+                       [baseRow-1, baseCol-2], [baseRow-1, baseCol+2], 
+                       [baseRow-2, baseCol-1], [baseRow-2, baseCol+1]
+                    ]  
+                    break
                 case 'P':
+                    const orientatedRowDiff = baseRow+(toPlay === 'light' ? 1 : -1)
                     if (takenPeice) {
-                        // search +1 and -1 col + 1 row toPlay === 'light' ? foward : backward
-                        findPeice('P', move, [ {diagonals: toPlay === 'light' ? 1 : -1, onwardOnly: true} ])
+                        // search +1 and -1 baseCol + 1 baseRow toPlay === 'light' ? foward : backward
+                        possibleCoords = [[orientatedRowDiff, baseCol-1], [orientatedRowDiff, baseCol+1]]
                     }
                     else {
-                        // search 1 row toPlay === 'light' ? foward : backward
-                        findPeice('P', move, [ {rows: toPlay === 'light' ? 1 : -1, onwardOnly: true} ])
+                        // search 1 baseRow toPlay === 'light' ? foward : backward
+                        possibleCoords = [[baseRow+(toPlay === 'light' ? 1 : -1), baseCol]]
                     }
-                    break;
-                case 'Q':
 
-                    break;
+                    // if first move, include 2 baseRow move
+                    var firstMoveConditionalCoord = [baseRow+(toPlay === 'light' ? 2 : -2), baseCol]
+                    if (this.rows[firstMoveConditionalCoord[0]]?.[colToChar(firstMoveConditionalCoord[1])]?.unit?.moves === 0) {
+                        possibleCoords.push(firstMoveConditionalCoord)
+                    }
+
+                    // if opposing pawn is one baseRow above and on it's first move, include En Passant
+
+                    break
+                case 'Q':
+                    for (let i = 1; i <= 8; i++) {
+                        possibleCoords.push([[baseRow+i, baseCol+i], [baseRow-i, baseCol-i]])
+                        possibleCoords.push([
+                                [baseRow+i, baseCol], 
+                            [baseRow, baseCol-i], [baseRow, baseCol+i]
+                                [baseRow-i, baseCol], 
+                        ])
+                    }
+                    break
                 case 'R':
-                    // within row and col of move coords
-                    break;
+                    // within baseRow and baseCol of move coords
+                    for (let i = 1; i <= 8; i++) {
+                        possibleCoords.push([
+                                [baseRow+i, baseCol], 
+                            [baseRow, baseCol-i], [baseRow, baseCol+i]
+                                [baseRow-i, baseCol], 
+                        ])
+                    }
+                    break
             }
+
+            // check each possibleCoord
+            const findPeices = (piece, side, possibleCoords) => {
+                
+                for (let [row, col] of possibleCoords) {
+                    const cell = this.rows[row][col]
+                    if (cell.side != side) {
+                        continue
+                    }
+
+                }
+            }
+            const cells = findPeices(movingPeice, toPlay, possibleCoords)
+
+
+
         }
     }
 }
