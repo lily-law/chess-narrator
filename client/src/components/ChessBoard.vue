@@ -108,7 +108,7 @@ export default {
                 console.warn('Invalid move notation with length < 2!') 
                 return false
             }
-            else if (!rawNotation.match(/\w\D|\d-d|\w\w\w/)) {
+            else if (!rawNotation.match(/\w\d|\d-d|\w\w\w/)) {
                 console.warn(`Invalid move notation! ${rawNotation}`) 
                 return false
             }
@@ -119,19 +119,61 @@ export default {
                 '!': 'good move',
                 '?': 'poor move'
             }
-            // TODO
-            // extract annotations
 
-            const notation = rawNotation
+            // extract annotations
+            const annoations = []
+            const notation = rawNotation.split('').filter(char => {
+                if (Object.keys(annotationLookup).includes(char)) {
+                    annoations.push(annoationsLookup[char])
+                    return false
+                }
+                return true
+            }).join('')
             
             // check if castling
-            if (notation.includes('0-0-0')) {
-                // TODO
-                // castle queenside
-            }
-            else if (notation.includes('0-0')) {
-                // TODO
-                // castle kingside
+            if (notation.includes('0-0')) {
+                const r = toPlay === 'light' ? 1 : 8
+                const kingCell = kingCell = this.rows[r]['e']
+                let kingDest
+                let rookCell
+                let rookDest
+                let freeCell
+                let description
+                if (notation.includes('0-0-0')) {
+                    // castle queenside
+                    kingDest = this.rows[r]['c']
+                    rookCell = this.rows[r]['a']
+                    rookDest = this.rows[r]['d']
+                    freeCell = this.rows[r]['b']
+                    description = 'Castled queenside'
+                }
+                else {
+                    // castle kingside
+                    kingDest = this.rows[r]['f']
+                    rookCell = this.rows[r]['h']
+                    rookDest = this.rows[r]['g']
+                    freeCell = {}
+                    description = 'Castled kingside'
+                }
+
+                if (kingCell.unit.moves > 0 || rookCell.unit.moves > 0) {
+                    console.warn('Invalid castling, King or Rook has moved previously')
+                    return
+                }
+                if (kingDest.unit || rookDest.unit || freeCell.unit) {
+                    console.warn('Invalid castling, units are in the way')
+                    return
+                }
+
+                kingDest.unit = { ...kingCell.unit }
+                rookDest.unit = { ...rookCell.unit }
+                delete kingCell.unit
+                delete rookCell.unit
+
+                return {
+                    annoations,
+                    description
+                }
             }
 
             const unitToMove = notation[0] === notation[0].toLowerCase() ? 'P' : notation[0]
@@ -140,7 +182,7 @@ export default {
                 unitToTake = 'P'
             }
             const move = notation.substr(notation.length-2).match(/[a-g]\d/)?.[0]
-            const specifiedOrig = notation[notation.length-3].match(/[a-g1-8]/)?.[0] || notation[notation.length-4].match(/[a-g1-8]/)?.[0]
+            const specifiedOrig = notation[notation.length-3]?.match(/[a-g1-8]/)?.[0] || notation[notation.length-4]?.match(/[a-g1-8]/)?.[0]
 
             const colToChar = (col) => String.fromCharCode(col + 96)
 
@@ -180,18 +222,18 @@ export default {
                             ]  
                             break
                         case 'P':
-                            const orientatedRowDiff = baseRow+(toPlay === 'light' ? 1 : -1)
+                            const orientatedRowDiff = baseRow+(toPlay === 'dark' ? 1 : -1)
                             if (unitToTake) {
                                 // search +1 and -1 baseCol + 1 baseRow toPlay === 'light' ? foward : backward
                                 possibleCoords = [[orientatedRowDiff, baseCol-1], [orientatedRowDiff, baseCol+1]]
                             }
                             else {
                                 // search 1 baseRow toPlay === 'light' ? foward : backward
-                                possibleCoords = [[baseRow+(toPlay === 'light' ? 1 : -1), baseCol]]
+                                possibleCoords = [[orientatedRowDiff, baseCol]]
                             }
 
                             // if first move, include 2 baseRow move
-                            var firstMoveConditionalCoord = [baseRow+(toPlay === 'light' ? 2 : -2), baseCol]
+                            var firstMoveConditionalCoord = [baseRow+(toPlay === 'dark' ? 2 : -2), baseCol]
                             if (this.rows[firstMoveConditionalCoord[0]]?.[colToChar(firstMoveConditionalCoord[1])]?.unit?.moves === 0) {
                                 possibleCoords.push(firstMoveConditionalCoord)
                             }
@@ -231,14 +273,13 @@ export default {
                 
                 // Remove any invalid coords
                 possibleCoords = possibleCoords.filter(coord => coord && coord[0] > 0 && coord[0] < 9 && coord[1] > 0 && coord[1] < 9)
-                console.log({possibleCoords})
                 for (let [row, col] of possibleCoords) {
                     const colChar = colToChar(col)
                     const cell = this.rows[row][colChar]
-                    if (cell.side != side || cell.unit != piece) {
+                    if (cell?.unit?.side != side || cell?.unit?.value != piece) {
                         continue
                     }
-                    cells.push({data: cell, location: row+colChar})
+                    cells.push({data: cell, location: colChar+row})
                 }
                 if (cells.length > 1) {
                     console.warn(`Notation ambigous, multiple possible pieces!: ${JSON.stringify(cells)}`)
@@ -269,14 +310,26 @@ export default {
             const cell = findPiece(unitToMove, toPlay, baseRow, baseCol)
             const pieceToMove = cell.data
             pieceToMove.unit.moves++
-            this.rows[move[0]][move[1]].unit = { ...pieceToMove }
-            this.rows[cell.location[0]][cell.location[1]].unit = {}
+            this.rows[move[1]][move[0]].unit = { ...pieceToMove.unit }
+            delete this.rows[cell.location[1]][cell.location[0]].unit
+
+            const getDescription = (moved, from, taken, onto) => {
+                const movesLookup = {
+                    'B': 'Bishop',
+                    'K': 'King',
+                    'N': 'Knight',
+                    'P': 'Pawn',
+                    'Q': 'Queen',
+                    'R': 'Rook'
+                }
+                const movingPeice = movesLookup[moved]
+                const takenPeice = taken && movesLookup[taken]
+                return `${movingPeice} on ${from} ${takenPeice ? 'takes '+takenPeice+' on' : 'moves to'} ${onto}`
+            }
 
             return {
-                from: { row: cell.location[0], col: cell.location[1] },
-                pieceMoved: pieceToMove,
-                pieceTaken: pieceToTake,
-                on: { row: move[0], col: move[1] }
+                annoations,
+                description: getDescription(unitToMove, cell.location, unitToTake, move)
             }
             
         }

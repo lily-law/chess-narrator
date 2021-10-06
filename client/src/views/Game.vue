@@ -20,7 +20,7 @@
             </div> 
             <div class="move">
                 <h3>{{ move }}</h3>
-                <p class="full-move">{{ fullMove }}</p>
+                <p class="full-move">{{ moveDescription }}</p>
             </div>
             <button v-on:click="next" class="next">{{this.turn === 0 ? 'Start' : 'Next'}}</button>
             <div class="commentry">{{ comment }}</div>
@@ -44,21 +44,21 @@ export default {
             id: this.$route.params.id,
             turn: 0,
             boardActive: false,
-            
+            moveDescription: '',
 
             // TEMP dummy data
             title: 'Someone vs Someone Else',
             notation: {
                 1: {
                     order: 1, 
-                    move: 'QxNe4',
+                    move: 'e4',
                     comment: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis semper arcu lacus, sit amet porttitor sem vehicula at. In ac turpis lacinia lectus rutrum sagittis. Nulla metus nulla, pellentesque ac magna et, elementum feugiat nisl. Proin bibendum ligula at arcu feugiat hendrerit. In purus turpis, tincidunt id neque accumsan, suscipit ultrices nisi. Maecenas posuere nunc ut efficitur pharetra. Quisque tristique blandit risus ut convallis.
 
 Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augue tristique, commodo pellentesque dui congue. Suspendisse potenti. Ut pulvinar cursus dolor, et efficitur leo congue nec. Fusce turpis urna, convallis sed feugiat id, viverra vel ex. Vestibulum ultricies ipsum in mauris aliquam luctus. Curabitur ut porttitor enim. Mauris et ultricies leo. Donec feugiat augue mauris, sed luctus dolor vestibulum at. Etiam iaculis ligula nec consectetur dictum. Nunc volutpat commodo nulla ac eleifend. Mauris varius dapibus massa non finibus. Vivamus malesuada malesuada ante, in sagittis ex venenatis sed. Suspendisse mattis risus dui, at dapibus enim pretium dapibus. Vivamus consectetur risus augue, eu venenatis lectus malesuada id. Duis sem ante, dapibus non magna eget, mollis porta magna.`
                 },
                 2: {
                     order: 2, 
-                    move: 'Ke4',
+                    move: 'd5',
                     comment: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis semper arcu lacus, sit amet porttitor sem vehicula at. In ac turpis lacinia lectus rutrum sagittis. Nulla metus nulla, pellentesque ac magna et, elementum feugiat nisl. Proin bibendum ligula at arcu feugiat hendrerit. In purus turpis, tincidunt id neque accumsan, suscipit ultrices nisi. Maecenas posuere nunc ut efficitur pharetra. Quisque tristique blandit risus ut convallis.
 
 Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augue tristique, commodo pellentesque dui congue. Suspendisse potenti. Ut pulvinar cursus dolor, et efficitur leo congue nec. Fusce turpis urna, convallis sed feugiat id, viverra vel ex. Vestibulum ultricies ipsum in mauris aliquam luctus. Curabitur ut porttitor enim. Mauris et ultricies leo. Donec feugiat augue mauris, sed luctus dolor vestibulum at. Etiam iaculis ligula nec consectetur dictum. Nunc volutpat commodo nulla ac eleifend. Mauris varius dapibus massa non finibus. Vivamus malesuada malesuada ante, in sagittis ex venenatis sed. Suspendisse mattis risus dui, at dapibus enim pretium dapibus. Vivamus consectetur risus augue, eu venenatis lectus malesuada id. Duis sem ante, dapibus non magna eget, mollis porta magna.`
@@ -69,7 +69,8 @@ Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augu
     methods: {
         next: function() {
             this.turn++
-            this.$refs.board.move(this.move, this.toPlay)
+            const { description } = this.$refs.board.move(this.move, this.toPlay)
+            this.moveDescription = description
         }
     },
     computed: {
@@ -78,25 +79,6 @@ Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augu
                 return ''
             }
             return this.notation[this.turn].move
-        },
-        fullMove: function () {
-            if (!this.move) {
-                return ''
-            }
-            const movesLookup = {
-                'B': 'Bishop',
-                'K': 'King',
-                'N': 'Knight',
-                'P': 'Pawn',
-                'Q': 'Queen',
-                'R': 'Rook'
-            }
-            const charToPeice = (char) => char && char === char.toLowerCase() ? movesLookup['P'] : movesLookup[char]
-            
-            const movingPeice = charToPeice(this.move[0])
-            let takenPeice = this.move.includes('x') && charToPeice(this.move[this.move.indexOf('x') + 1])
-            const move = this.move.substr(this.move.length-2)
-            return `${movingPeice} ${takenPeice ? 'takes '+takenPeice+' on' : 'to'} ${move}`
         },
         comment: function () {
             if (!this.notation[this.turn]?.comment) {
