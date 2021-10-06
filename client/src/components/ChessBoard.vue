@@ -1,7 +1,7 @@
 <template>
     <ol class="chess-board">
         <ol v-for="[rowNumber, row] in Object.entries(rows).reverse()" :key="rowNumber+JSON.stringify(row)" class="row">
-            <li v-for="[column, cell] in Object.entries(row)" :key="rowNumber+column+cell.unit"><img v-if="cell.unit.value" :src="`/assets/pieces/standard/${cell.unit.side}/${cell.unit.value}.png`" alt="" /></li>
+            <li v-for="[column, cell] in Object.entries(row)" :key="rowNumber+column+cell.unit"><img v-if="cell.unit" :src="`/assets/pieces/standard/${cell.unit.side}/${cell.unit.value}.png`" alt="" /></li>
         </ol>
     </ol>
 </template>
@@ -99,13 +99,17 @@ export default {
         }
     },
     methods: {
-        move: function (notation, toPlay) {
-            if (!notation[0]) {
+        move: function (rawNotation, toPlay) {
+            if (!rawNotation[0]) {
                 console.warn('Empty move!') // TODO work out if this edge case needs handling
                 return false
             }
-            else if (notation.length < 2) {
+            else if (rawNotation.length < 2) {
                 console.warn('Invalid move notation with length < 2!') 
+                return false
+            }
+            else if (!rawNotation.match(/\w\D|\d-d|\w\w\w/)) {
+                console.warn(`Invalid move notation! ${rawNotation}`) 
                 return false
             }
 
@@ -117,19 +121,21 @@ export default {
             }
             // TODO
             // extract annotations
+
+            const notation = rawNotation
             
             // check if castling
-            if (this.notation.includes('0-0-0')) {
+            if (notation.includes('0-0-0')) {
                 // TODO
                 // castle queenside
             }
-            else if (this.notation.includes('0-0')) {
+            else if (notation.includes('0-0')) {
                 // TODO
                 // castle kingside
             }
 
-            const unitToMove = notation[0] === notation[0].toLowerCase() ? 'P' : this.notation[0]
-            let unitToTake = this.notation.includes('x') && this.notation[this.notation.indexOf('x') + 1]
+            const unitToMove = notation[0] === notation[0].toLowerCase() ? 'P' : notation[0]
+            let unitToTake = notation.includes('x') && notation[notation.indexOf('x') + 1]
             if (unitToTake[0] && unitToTake[0] === unitToTake[0].toPlay) {
                 unitToTake = 'P'
             }
@@ -141,11 +147,11 @@ export default {
             const findPiece = (piece, side, baseRow, baseCol) => {
                 let possibleCoords = []
                 
-                if (!baseRow && baseCol) {
+                if (!baseRow || !baseCol) {
                     // all coords
                     for (let r = 1; r <= 8; r++) {
                         for (let c = 1; c <= 8; c++) {
-                            possibleCoords.push([[baseRow+r, baseCol+c]])
+                            possibleCoords.push(...[[baseRow+r, baseCol+c]])
                         }
                     }
                 }
@@ -154,7 +160,7 @@ export default {
                         case 'B':
                             // search diagonals from move coords
                             for (let i = 1; i <= 8; i++) {
-                                possibleCoords.push([[baseRow+i, baseCol+i], [baseRow-i, baseCol-i]])
+                                possibleCoords.push(...[[baseRow+i, baseCol+i], [baseRow-i, baseCol-i]])
                             }
                             break
                         case 'K':
@@ -195,8 +201,8 @@ export default {
                             break
                         case 'Q':
                             for (let i = 1; i <= 8; i++) {
-                                possibleCoords.push([[baseRow+i, baseCol+i], [baseRow-i, baseCol-i]])
-                                possibleCoords.push([
+                                possibleCoords.push(...[[baseRow+i, baseCol+i], [baseRow-i, baseCol-i]])
+                                possibleCoords.push(...[
                                         [baseRow+i, baseCol], 
                                     [baseRow, baseCol-i], [baseRow, baseCol+i]
                                         [baseRow-i, baseCol], 
@@ -206,7 +212,7 @@ export default {
                         case 'R':
                             // within baseRow and baseCol of move coords
                             for (let i = 1; i <= 8; i++) {
-                                possibleCoords.push([
+                                possibleCoords.push(...[
                                         [baseRow+i, baseCol], 
                                     [baseRow, baseCol-i], [baseRow, baseCol+i]
                                         [baseRow-i, baseCol], 
@@ -222,12 +228,17 @@ export default {
 
                 // check each possibleCoord
                 let cells = []
+                
+                // Remove any invalid coords
+                possibleCoords = possibleCoords.filter(coord => coord && coord[0] > 0 && coord[0] < 9 && coord[1] > 0 && coord[1] < 9)
+                console.log({possibleCoords})
                 for (let [row, col] of possibleCoords) {
-                    const cell = this.rows[row][col]
+                    const colChar = colToChar(col)
+                    const cell = this.rows[row][colChar]
                     if (cell.side != side || cell.unit != piece) {
                         continue
                     }
-                    cells.push({data: cell, location: row+colToChar(col)})
+                    cells.push({data: cell, location: row+colChar})
                 }
                 if (cells.length > 1) {
                     console.warn(`Notation ambigous, multiple possible pieces!: ${JSON.stringify(cells)}`)
@@ -253,7 +264,7 @@ export default {
             }
 
             // convert move char to int
-            const [baseRow, baseCol] = [move[0], move.charCodeAt(0)-96]
+            const [baseRow, baseCol] = [parseInt(move[1]), move.charCodeAt(0)-96]
             
             const cell = findPiece(unitToMove, toPlay, baseRow, baseCol)
             const pieceToMove = cell.data

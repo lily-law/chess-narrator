@@ -45,7 +45,7 @@ export default {
             turn: 0,
             boardActive: false,
             
-        
+
             // TEMP dummy data
             title: 'Someone vs Someone Else',
             notation: {
@@ -69,7 +69,7 @@ Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augu
     methods: {
         next: function() {
             this.turn++
-            this.$refs.board.move(this.notation[this.turn], this.toPlay)
+            this.$refs.board.move(this.move, this.toPlay)
         }
     },
     computed: {
