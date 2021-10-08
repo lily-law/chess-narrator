@@ -8,7 +8,7 @@
         </header>
         <aside>
             <ol>
-                <li v-for="item in Object.values(notation)" :key="item.order">
+                <li v-for="item in Object.values(notation)" v-on:click="goto(item.order)"  :key="item.order">
                     <div class="list__move">{{ item.move }}</div>
                     <div v-if="item.comment" class="list__comment">- <span>{{ item.comment }}</span></div>
                 </li>
@@ -62,15 +62,50 @@ Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augu
                     comment: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis semper arcu lacus, sit amet porttitor sem vehicula at. In ac turpis lacinia lectus rutrum sagittis. Nulla metus nulla, pellentesque ac magna et, elementum feugiat nisl. Proin bibendum ligula at arcu feugiat hendrerit. In purus turpis, tincidunt id neque accumsan, suscipit ultrices nisi. Maecenas posuere nunc ut efficitur pharetra. Quisque tristique blandit risus ut convallis.
 
 Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augue tristique, commodo pellentesque dui congue. Suspendisse potenti. Ut pulvinar cursus dolor, et efficitur leo congue nec. Fusce turpis urna, convallis sed feugiat id, viverra vel ex. Vestibulum ultricies ipsum in mauris aliquam luctus. Curabitur ut porttitor enim. Mauris et ultricies leo. Donec feugiat augue mauris, sed luctus dolor vestibulum at. Etiam iaculis ligula nec consectetur dictum. Nunc volutpat commodo nulla ac eleifend. Mauris varius dapibus massa non finibus. Vivamus malesuada malesuada ante, in sagittis ex venenatis sed. Suspendisse mattis risus dui, at dapibus enim pretium dapibus. Vivamus consectetur risus augue, eu venenatis lectus malesuada id. Duis sem ante, dapibus non magna eget, mollis porta magna.`
+                },
+                3: {
+                    order: 3,
+                    move: 'c3'
+                },
+                4: {
+                    order: 4,
+                    move: 'c6'
+                },
+                5: {
+                    order: 5,
+                    move: 'Qh5'
                 }
             }
         }
     },
     methods: {
         next: function() {
-            this.turn++
-            const { description } = this.$refs.board.move(this.move, this.toPlay)
-            this.moveDescription = description
+            if (!this.finalMove) {
+                this.turn++
+                const { description } = this.$refs.board.move(this.move, this.toPlay)
+                this.moveDescription = description
+            }
+        },
+        prev: function() {
+            if (this.turn > 0) {
+                this.turn--
+                if (this.move) {
+                    const { description } = this.$refs.board.undoMove()
+                    this.moveDescription = description
+                }
+            }
+        },
+        goto: function(t) {
+            if (this.turn === t) {
+                return
+            }
+            if (this.turn > t) {
+                this.prev()
+            }
+            else {
+                this.next()
+            }
+            this.goto(t)
         }
     },
     computed: {
@@ -88,6 +123,9 @@ Suspendisse suscipit leo at nunc tincidunt elementum. Donec luctus magna ac augu
         },
         toPlay: function () {
             return this.turn % 2 === 0 ? 'dark' : 'light'
+        },
+        finalMove: function () {
+            return !this.notation[this.turn+1]
         }
     }
 }

@@ -1,13 +1,15 @@
 <template>
     <ol class="chess-board">
         <ol v-for="[rowNumber, row] in Object.entries(rows).reverse()" :key="rowNumber+JSON.stringify(row)" class="row">
-            <li v-for="[column, cell] in Object.entries(row)" :key="rowNumber+column+cell.unit"><img v-if="cell.unit" :src="`/assets/pieces/standard/${cell.unit.side}/${cell.unit.value}.png`" alt="" /></li>
+            <li v-for="[column, cell] in Object.entries(row)" :key="rowNumber+column+cell.unit+cell.highlight" :class="cell.highlight"><img v-if="cell.unit" :src="`/assets/pieces/standard/${cell.unit.side}/${cell.unit.value}.png`" alt="" /></li>
         </ol>
     </ol>
 </template>
 
 <script>
 
+const colToChar = (col) => String.fromCharCode(col + 96)
+const charToCol = (char) => char.charCodeAt(0)-96
 
 export default {
     name: 'chess-board',
@@ -95,7 +97,8 @@ export default {
                     h: { unit: { value: 'R', side: 'dark', moves: 0 } }
                 }
             },
-            bench: {}
+            bench: {dark: {}, light: {}},
+            history: []
         }
     },
     methods: {
@@ -129,6 +132,9 @@ export default {
                 }
                 return true
             }).join('')
+
+            let changes = []
+            let description
             
             // check if castling
             if (notation.includes('0-0')) {
@@ -138,7 +144,6 @@ export default {
                 let rookCell
                 let rookDest
                 let freeCell
-                let description
                 if (notation.includes('0-0-0')) {
                     // castle queenside
                     kingDest = this.rows[r]['c']
@@ -146,6 +151,8 @@ export default {
                     rookDest = this.rows[r]['d']
                     freeCell = this.rows[r]['b']
                     description = 'Castled queenside'
+                    changes.push({from: [r, 'e'], to: [r, 'c'] })
+                    changes.push({from: [r, 'a'], to: [r, 'd'] })
                 }
                 else {
                     // castle kingside
@@ -154,6 +161,8 @@ export default {
                     rookDest = this.rows[r]['g']
                     freeCell = {}
                     description = 'Castled kingside'
+                    changes.push({from: [r, 'e'], to: [r, 'f'] })
+                    changes.push({from: [r, 'h'], to: [r, 'g'] })
                 }
 
                 if (kingCell.unit.moves > 0 || rookCell.unit.moves > 0) {
@@ -170,6 +179,12 @@ export default {
                 delete kingCell.unit
                 delete rookCell.unit
 
+                this.history.push({
+                    annoations,
+                    description,
+                    changes
+                })
+
                 return {
                     annoations,
                     description
@@ -178,13 +193,11 @@ export default {
 
             const unitToMove = notation[0] === notation[0].toLowerCase() ? 'P' : notation[0]
             let unitToTake = notation.includes('x') && notation[notation.indexOf('x') + 1]
-            if (unitToTake[0] && unitToTake[0] === unitToTake[0].toPlay) {
+            if (unitToTake[0] && unitToTake[0] === unitToTake[0].toLowerCase()) {
                 unitToTake = 'P'
             }
-            const move = notation.substr(notation.length-2).match(/[a-g]\d/)?.[0]
-            const specifiedOrig = notation[notation.length-3]?.match(/[a-g1-8]/)?.[0] || notation[notation.length-4]?.match(/[a-g1-8]/)?.[0]
-
-            const colToChar = (col) => String.fromCharCode(col + 96)
+            const move = notation.substr(notation.length-2).match(/[a-h]\d/)?.[0]
+            const specifiedOrig = notation[notation.length-3]?.match(/[a-h1-8]/)?.[0] || notation[notation.length-4]?.match(/[a-h1-8]/)?.[0]
 
             const findPiece = (piece, side, baseRow, baseCol) => {
                 let possibleCoords = []
@@ -238,8 +251,6 @@ export default {
                                 possibleCoords.push(firstMoveConditionalCoord)
                             }
 
-                            // if opposing pawn is one baseRow above and on it's first move, include En Passant
-
                             break
                         case 'Q':
                             for (let i = 1; i <= 8; i++) {
@@ -292,21 +303,32 @@ export default {
             }
 
             // if move not in notation find unitToTake
-            let pieceToTake;
             if (!move) {
                 if (!unitToTake) {
                     console.warn(`Invalid notation!: ${notation}`)
                     return 
                 }
-
                 const cell = findPiece(unitToTake, toPlay === 'light' ? 'dark' : 'light')
-                pieceToTake = cell?.data
                 move = cell?.location
             }
 
+            // Put taken piece in bench
+            if (unitToTake) {
+                // TODO: if opposing pawn is one row above and on it's first move, En Passant, taken piece is one row back
+                if (unitToTake === 'P' && !this.rows[move[1]][move[0]].unit && this.rows[move[1] + (toPlay === 'light' ? -1 : 1)][move[0]].unit.value === 'P') {
+                    this.bench[toPlay].push({ ...this.rows[move[1] + (toPlay === 'light' ? -1 : 1)][move[0]].unit })
+                    this.rows[move[1] + (toPlay === 'light' ? -1 : 1)][move[0]].unit = {}
+                }
+                else if (this.rows[move[1]][move[0]].unit) {
+                    this.bench[toPlay].push({ ...this.rows[move[1]][move[0]].unit })
+                    this.rows[move[1]][move[0]].unit = {}
+                }
+            }
+
             // convert move char to int
-            const [baseRow, baseCol] = [parseInt(move[1]), move.charCodeAt(0)-96]
-            
+            const [baseRow, baseCol] = [parseInt(move[1]), charToCol(move)]
+
+            // Move piece
             const cell = findPiece(unitToMove, toPlay, baseRow, baseCol)
             const pieceToMove = cell.data
             pieceToMove.unit.moves++
@@ -327,11 +349,61 @@ export default {
                 return `${movingPeice} on ${from} ${takenPeice ? 'takes '+takenPeice+' on' : 'moves to'} ${onto}`
             }
 
+            description = getDescription(unitToMove, cell.location, unitToTake, move)
+            changes = [
+                { from: [cell.location[1], cell.location[0]], to: [move[1], move[0]] }
+            ]
+
+            this.history.push({
+                annoations,
+                description,
+                changes
+            })
+
+            this.highlightPath(changes[0])
+
             return {
                 annoations,
-                description: getDescription(unitToMove, cell.location, unitToTake, move)
+                description
             }
-            
+
+        },
+        undoMove: function () {
+            const { annoations, description, changes } = this.history.pop()
+            for (let {from, to} of changes) {
+                const fromUnit = this.rows[from[0]][from[1]].unit ? {...this.rows[from[0]][from[1]].unit} : {}
+                const toUnit = this.rows[to[0]][to[1]].unit ? {...this.rows[to[0]][to[1]].unit} : {}
+                toUnit?.moves && toUnit.moves--
+                // TODO handle taken pieces
+                this.rows[from[0]][from[1]] = { ...this.rows[from[0]][from[1]], unit: toUnit }
+                this.rows[to[0]][to[1]] = { ...this.rows[to[0]][to[1]], unit: fromUnit }
+            }
+            return {
+                annoations,
+                description
+            }
+        },
+        highlightPath: function ({from, to}, knightMove) {
+            this.clearPathHighlight()
+        //    if (!knightMove) {   
+                const colFrom = charToCol(from[1])
+                const colTo = charToCol(to[1])
+                console.log({rowFrom: from[0], colFrom, rowTo: to[0], colTo, })
+                for (let r = from[0], c = colFrom; r != to[0] || c != colTo; r != to[0] && (from[0] < to[0] ? r++ : r--), c != colTo && (colFrom < colTo ? c++ : c--)) {
+                    this.rows[r][colToChar(c)].highlight = 'trail'
+                }
+                this.rows[to[0]][to[1]].highlight = 'trail'
+        //    }
+        //    else {
+
+         //   }
+        },
+        clearPathHighlight: function() {
+            for (let row of Object.values(this.rows)) {
+                for (let cell of Object.values(row)) {
+                    delete cell.highlight
+                }
+            }
         }
     }
 }
@@ -370,6 +442,19 @@ export default {
     .row:nth-child(8) li:nth-child(1), .row:nth-child(8) li:nth-child(3), .row:nth-child(8) li:nth-child(5), .row:nth-child(8) li:nth-child(7)
     {
         background-color: #808080;
+    }
+    .trail {
+        position: relative;
+    }
+    .trail::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: blue !important;
+        opacity: 0.2;
     }
     
 </style>
